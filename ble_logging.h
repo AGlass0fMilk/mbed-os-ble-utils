@@ -22,6 +22,8 @@
 
 #include "ble/BLE.h"
 
+#include "mbed_trace.h"
+
 /**
  * Log a BLE error
  * @param[in] error Error type to log

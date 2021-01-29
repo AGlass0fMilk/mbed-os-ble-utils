@@ -45,14 +45,6 @@
 #define MBED_CONF_BLE_PROCESS_PREFERRED_RX_PHY BLE_PHY_LE_1M
 #endif
 
-#ifndef MBED_CONF_BLE_PROCESS_ENABLE_PRIVACY
-#define MBED_CONF_BLE_PROCESS_ENABLE_PRIVACY true // todo change this to false by default
-#endif
-
-#if MBED_CONF_BLE_PROCESS_ENABLE_PRIVACY && !BLE_FEATURE_PRIVACY
-#warning LE Privacy is disabled in the stack and will not be available to BLEProcess.
-#endif
-
 /**
  * Handle initialization and shutdown of the BLE Instance.
  * It will also run the  event queue and call your post init callback when everything is up and running.
@@ -121,13 +113,12 @@ protected:
      * Finish initialization process
      * This method must be implemented by the subclass process
      */
-    virtual void finish_initialization(void) = 0;
+    virtual void finish_initialization(void);
 
-#if MBED_CONF_BLE_PROCESS_ENABLE_PRIVACY && BLE_FEATURE_PRIVACY
-
-    virtual void onPrivacyEnabled() override;
-
-#endif
+    /**
+     * Must be called by the subclass after initialization is finished.
+     */
+    void initialization_done(ble_error_t err);
 
 protected:
 

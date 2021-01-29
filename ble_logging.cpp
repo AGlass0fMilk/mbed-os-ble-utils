@@ -19,8 +19,6 @@
 
 #include "ble_logging.h"
 
-#include "mbed_trace.h"
-
 #define TRACE_GROUP "ble"
 
 void ble_log_error(ble_error_t error, const char *msg) {

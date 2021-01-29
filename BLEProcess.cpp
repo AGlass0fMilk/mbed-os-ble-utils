@@ -57,7 +57,7 @@ ble_error_t BLEProcess::start() {
     );
 
     if (error) {
-        tr_error(error, "Error returned by BLE::init");
+        ble_log_error(error, "Error returned by BLE::init");
     }
 
     return error;
@@ -80,9 +80,9 @@ void BLEProcess::on_init_complete(BLE::InitializationCompleteCallbackContext *ev
 
     tr_info("BLE instance (%p) initialized", (void*)(&_ble));
 
-    /* Set the preferred PHY as per the configuration (LE_1M is default) */
-    ble::phy_set_t rx_phys(/* 1M */ true, /* 2M */ false, /* coded */ false);
-    ble::phy_set_t tx_phys(/* 1M */ true, /* 2M */ false, /* coded */ false);
+    /* Set the preferred PHY as per the configuration */
+    ble::phy_set_t rx_phys(/* 1M */ false, /* 2M */ false, /* coded */ false);
+    ble::phy_set_t tx_phys(/* 1M */ false, /* 2M */ false, /* coded */ false);
 
     /* Note: 2M and coded phy communication will only take place if both peers support it */
 
@@ -90,22 +90,28 @@ void BLEProcess::on_init_complete(BLE::InitializationCompleteCallbackContext *ev
     if(MBED_CONF_BLE_PROCESS_PREFERRED_RX_PHY == ble::phy_t::LE_2M) {
         /** Assert that the 2M phy is supported */
         assert(_ble.gap().isFeatureSupported(ble::controller_supported_features_t::LE_2M_PHY));
-        rx_phys.phy_set_t(/* 1M */ false, /* 2M */ true, /* coded */ false);
+        rx_phys.set_2m(true);
     } else if(MBED_CONF_BLE_PROCESS_PREFERRED_RX_PHY == ble::phy_t::LE_CODED) {
         /** Assert that the coded phy is supported */
         assert(_ble.gap().isFeatureSupported(ble::controller_supported_features_t::LE_CODED_PHY));
-        rx_phys.phy_set_t(/* 1M */ false, /* 2M */ false, /* coded */ true);
+        rx_phys.set_coded(true);
+    } else {
+        /* LE_1M is the default */
+        rx_phys.set_1m(true);
     }
 
     /* TX Phy */
     if(MBED_CONF_BLE_PROCESS_PREFERRED_TX_PHY == ble::phy_t::LE_2M) {
         /** Assert that the 2M phy is supported */
         assert(_ble.gap().isFeatureSupported(ble::controller_supported_features_t::LE_2M_PHY));
-        tx_phys.phy_set_t(/* 1M */ false, /* 2M */ true, /* coded */ false);
+        tx_phys.set_2m(true);
     } else if(MBED_CONF_BLE_PROCESS_PREFERRED_TX_PHY == ble::phy_t::LE_CODED) {
         /** Assert that the coded phy is supported */
         assert(_ble.gap().isFeatureSupported(ble::controller_supported_features_t::LE_CODED_PHY));
-        tx_phys.phy_set_t(/* 1M */ false, /* 2M */ false, /* coded */ true);
+        tx_phys.set_coded(true);
+    } else {
+        /* LE_1M is the default */
+        tx_phys.set_1m(true);
     }
 
     ble_error_t error = _ble.gap().setPreferredPhys(&tx_phys, &rx_phys);
@@ -114,27 +120,7 @@ void BLEProcess::on_init_complete(BLE::InitializationCompleteCallbackContext *ev
         ble_log_error(error, "GAP::setPreferredPhys failed");
     }
 
-#if MBED_CONF_BLE_PROCESS_ENABLE_PRIVACY && BLE_FEATURE_PRIVACY
-
-    error = _ble.gap().enablePrivacy(true);
-    if (error) {
-        ble_log_error(error, "Error enabling privacy");
-        return;
-    }
-
-    /* continuation is in onPrivacyEnabled() */
-
-#else
-
-    ble_log_local_mac_address(_ble);
-
     finish_initialization();
-
-    if (_post_init_cb) {
-        _post_init_cb(event);
-    }
-
-#endif
 
 }
 
@@ -214,26 +200,23 @@ void BLEProcess::schedule_ble_events(BLE::OnEventsToProcessCallbackContext *even
     _event_queue.call(mbed::callback(&event->ble, &BLE::processEvents));
 }
 
-#if MBED_CONF_BLE_PROCESS_ENABLE_PRIVACY && BLE_FEATURE_PRIVACY
+void BLEProcess::finish_initialization(void) {
+    initialization_done(BLE_ERROR_NONE);
+}
 
-void BLEProcess::onPrivacyEnabled() {
+void BLEProcess::initialization_done(ble_error_t err) {
 
     ble_log_local_mac_address(_ble);
 
-    finish_initialization();
-
     struct BLE::InitializationCompleteCallbackContext event = {
             .ble = _ble,
-            .error = BLE_ERROR_NONE
+            .error = err
     };
 
     if (_post_init_cb) {
         _post_init_cb(&event);
     }
-
 }
-
-#endif
 
 
 
