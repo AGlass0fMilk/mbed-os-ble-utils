@@ -38,7 +38,7 @@ void ble_log_address(const ble::address_t &addr);
 /**
  * Log local device MAC address
  */
-void ble_log_local_mac_address();
+void ble_log_local_mac_address(BLE &ble);
 
 /**
  * Print the given address into the given buffer.

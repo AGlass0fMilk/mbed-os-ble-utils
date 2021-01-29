@@ -21,19 +21,37 @@
 #define _BLEPROCESS_H_
 
 #include <stdint.h>
-#include "pretty_printer.h"
-
 #include <events/mbed_events.h>
+
 #include "platform/Callback.h"
 #include "platform/NonCopyable.h"
 #include "platform/mbed_toolchain.h"
 
 #include "ble/BLE.h"
 #include "Gap.h"
-#include "gap/AdvertisingDataParser.h"
-#include "ble/common/FunctionPointerWithContext.h"
+#include "gap/ChainableGapEventHandler.h"
 
-static const uint16_t MAX_ADVERTISING_PAYLOAD_SIZE = 50;
+/** Configuration preprocessors */
+
+#define BLE_PHY_LE_1M ble::phy_t::LE_1M
+#define BLE_PHY_LE_2M ble::phy_t::LE_2M
+#define BLE_PHY_LE_CODED ble::phy_t::LE_CODED
+
+#ifndef MBED_CONF_BLE_PROCESS_PREFERRED_TX_PHY
+#define MBED_CONF_BLE_PROCESS_PREFERRED_TX_PHY BLE_PHY_LE_1M
+#endif
+
+#ifndef MBED_CONF_BLE_PROCESS_PREFERRED_RX_PHY
+#define MBED_CONF_BLE_PROCESS_PREFERRED_RX_PHY BLE_PHY_LE_1M
+#endif
+
+#ifndef MBED_CONF_BLE_PROCESS_ENABLE_PRIVACY
+#define MBED_CONF_BLE_PROCESS_ENABLE_PRIVACY true // todo change this to false by default
+#endif
+
+#if MBED_CONF_BLE_PROCESS_ENABLE_PRIVACY && !BLE_FEATURE_PRIVACY
+#warning LE Privacy is disabled in the stack and will not be available to BLEProcess.
+#endif
 
 /**
  * Handle initialization and shutdown of the BLE Instance.
@@ -41,22 +59,29 @@ static const uint16_t MAX_ADVERTISING_PAYLOAD_SIZE = 50;
  */
 class BLEProcess : private mbed::NonCopyable<BLEProcess>, public ble::Gap::EventHandler
 {
+
+public:
+
+    using post_init_cb_t = mbed::Callback<void(BLE::InitializationCompleteCallbackContext*)>;
+
 public:
     /**
      * Construct a BLEProcess from an event queue and a ble interface.
      * Call start() to initiate ble processing.
+     * @param[in] event_queue Event Queue to process BLE events on
+     * @param[in] ble_interface BLE interface to use
      */
     BLEProcess(events::EventQueue &event_queue, BLE &ble_interface);
 
     virtual ~BLEProcess();
 
     /**
-     * Initialize the ble interface, configure it and start advertising.
+     * Initialize the ble interface, configure it and start the process.
      */
-    void start();
+    ble_error_t start();
 
     /**
-     * Close existing connections and stop the process.
+     * Stop the process.
      */
     void stop();
 
@@ -65,82 +90,55 @@ public:
      *
      * @param[in] cb The callback object that will be called when the ble interface is initialized.
      */
-    void on_init(mbed::Callback<void(BLE&, events::EventQueue&)> cb) {
+    void on_init(post_init_cb_t cb) {
         _post_init_cb = cb;
     }
-
-    /**
-     * Set callback for a succesful connection.
-     *
-     * @param[in] cb The callback object that will be called when we connect to a peer
-     */
-    MBED_DEPRECATED("BLEProcess::on_connect is deprecated. Instead, see BLEProcess::add_gap_event_handler")
-    void on_connect(mbed::Callback<void(BLE&, events::EventQueue&, const ble::ConnectionCompleteEvent &event)> cb) {
-        _post_connect_cb = cb;
-    }
-
-    /**
-     * Allow the application to register Gap::EventHandler instances to the internal ChainableGapEventHandler
-     * @param[in] eh Gap::EventHandler instance to add to event handler chain
-     */
-    //void add_gap_event_handler();
 
     /** Name we advertise as. */
     virtual const char* get_device_name()
     {
-        static const char name[] = "BleProcess";
+        static const char name[] = "MbedBLE";
         return name;
     }
 
+    ChainableGapEventHandler& gap_event_chain() {
+        return _gap_eh;
+    }
+
 protected:
+
     /**
-     * Sets up adverting payload and start advertising.
      * This function is invoked when the ble interface is initialized.
      */
     void on_init_complete(BLE::InitializationCompleteCallbackContext *event);
-
-    /**
-     * Start the gatt client process when a connection event is received.
-     * This is called by Gap to notify the application we connected
-     */
-    void onConnectionComplete(const ble::ConnectionCompleteEvent &event) override;
-
-    /**
-     * Stop the gatt client process when the device is disconnected then restart advertising.
-     * This is called by Gap to notify the application we disconnected
-     */
-    void onDisconnectionComplete(const ble::DisconnectionCompleteEvent &event) override;
-
-    /** Restarts main activity */
-    void onAdvertisingEnd(const ble::AdvertisingEndEvent &event);
-
-    /**
-     * Start advertising or scanning. Triggered by init or disconnection.
-     */
-    virtual void start_activity();
-
-    /**
-     * Start the advertising process; it ends when a device connects.
-     */
-    void start_advertising();
 
     /**
      * Schedule processing of events from the BLE middleware in the event queue.
      */
     void schedule_ble_events(BLE::OnEventsToProcessCallbackContext *event);
 
+    /**
+     * Finish initialization process
+     * This method must be implemented by the subclass process
+     */
+    virtual void finish_initialization(void) = 0;
+
+#if MBED_CONF_BLE_PROCESS_ENABLE_PRIVACY && BLE_FEATURE_PRIVACY
+
+    virtual void onPrivacyEnabled() override;
+
+#endif
+
 protected:
+
     events::EventQueue &_event_queue;
     BLE &_ble;
-    ble::Gap &_gap;
+    ChainableGapEventHandler _gap_eh;
 
-    uint8_t _adv_buffer[MAX_ADVERTISING_PAYLOAD_SIZE];
-    ble::AdvertisingDataBuilder _adv_data_builder;
+    /** Application post init callback */
+    post_init_cb_t _post_init_cb;
 
-    ble::advertising_handle_t _adv_handle = ble::LEGACY_ADVERTISING_HANDLE;
 
-    mbed::Callback<void(BLE&, events::EventQueue&)> _post_init_cb;
-    mbed::Callback<void(BLE&, events::EventQueue&, const ble::ConnectionCompleteEvent &event)> _post_connect_cb;
 };
 
 #endif /* _BLEPROCESS_H_ */

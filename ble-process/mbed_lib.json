@@ -1,0 +1,19 @@
+{
+    "name": "ble-process",
+    "config": {
+        "preferred-tx-phy": {
+            "help": "Set the preferred TX PHY to configure at initialization of the BLE process. Note that some targets may not support all PHYs.",
+            "accepted_values": ["BLE_PHY_LE_1M", "BLE_PHY_LE_2M", "BLE_PHY_LE_CODED"],
+            "value": "BLE_PHY_LE_1M"
+        },
+        "preferred-rx-phy": {
+            "help": "Set the preferred RX PHY to configure at initialization of the BLE process. Note that some targets may not support all PHYs.",
+            "accepted_values": ["BLE_PHY_LE_1M", "BLE_PHY_LE_2M", "BLE_PHY_LE_CODED"],
+            "value": "BLE_PHY_LE_1M"
+        },
+        "enable-privacy": {
+            "help": "If set to true, LE privacy will be enabled and configured during initialization.",
+            "value": false
+        }
+    }
+}

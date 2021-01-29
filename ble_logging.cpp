@@ -78,12 +78,12 @@ void ble_log_address(const ble::address_t &addr) {
     tr_info("%s", mac_string);
 }
 
-void ble_log_local_mac_address() {
+void ble_log_local_mac_address(BLE &ble) {
     /* Print out device MAC address to the console*/
     ble::own_address_type_t addr_type;
     ble::address_t address;
     char mac_string[19];
-    BLE::Instance().gap().getAddress(addr_type, address);
+    ble.gap().getAddress(addr_type, address);
     ble_log_sprintf_address(mac_string, address);
     tr_info("DEVICE MAC ADDRESS: %s", mac_string);
 }
