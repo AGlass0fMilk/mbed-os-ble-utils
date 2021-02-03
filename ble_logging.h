@@ -24,6 +24,40 @@
 
 #include "mbed_trace.h"
 
+#define BLE_FRAMEWORK_TRACE_GROUP "bleP"
+
+/* Macros to avoid defining "bleP" in .tpp files,
+ * as these get included as headers essentially. This would cause
+ * redefinitions of TRACE_GROUP in files that include BLE framework headers
+ */
+#if MBED_TRACE_MAX_LEVEL >= TRACE_LEVEL_DEBUG
+#define ble_tr_debug(...)           mbed_tracef(TRACE_LEVEL_DEBUG,   BLE_FRAMEWORK_TRACE_GROUP, __VA_ARGS__)   //!< Print debug message
+#else
+#define ble_tr_debug(...)
+#endif
+
+#if MBED_TRACE_MAX_LEVEL >= TRACE_LEVEL_INFO
+#define ble_tr_info(...)            mbed_tracef(TRACE_LEVEL_INFO,    BLE_FRAMEWORK_TRACE_GROUP, __VA_ARGS__)   //!< Print info message
+#else
+#define ble_tr_info(...)
+#endif
+
+#if MBED_TRACE_MAX_LEVEL >= TRACE_LEVEL_WARN
+#define ble_tr_warning(...)         mbed_tracef(TRACE_LEVEL_WARN,    BLE_FRAMEWORK_TRACE_GROUP, __VA_ARGS__)   //!< Print warning message
+#define ble_tr_warn(...)            mbed_tracef(TRACE_LEVEL_WARN,    BLE_FRAMEWORK_TRACE_GROUP, __VA_ARGS__)   //!< Alternative warning message
+#else
+#define ble_tr_warning(...)
+#define ble_tr_warn(...)
+#endif
+
+#if MBED_TRACE_MAX_LEVEL >= TRACE_LEVEL_ERROR
+#define ble_tr_error(...)           mbed_tracef(TRACE_LEVEL_ERROR,   BLE_FRAMEWORK_TRACE_GROUP, __VA_ARGS__)   //!< Print Error Message
+#define ble_tr_err(...)             mbed_tracef(TRACE_LEVEL_ERROR,   BLE_FRAMEWORK_TRACE_GROUP, __VA_ARGS__)   //!< Alternative error message
+#else
+#define ble_tr_error(...)
+#define ble_tr_err(...)
+#endif
+
 /**
  * Log a BLE error
  * @param[in] error Error type to log

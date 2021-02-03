@@ -20,32 +20,13 @@
 
 #include "ble_logging.h"
 
-#define TRACE_GROUP "BleP"
-
 template<typename BASE>
 void PrivacyMixIn<BASE>::finish_initialization() {
-    tr_debug("PrivacyMixIn<BASE>::finish_initialization() called");
+    ble_tr_debug("PrivacyMixIn::finish_initialization() called");
     ble_error_t err;
 
-    // TODO - put this in SecurityManagerMixIn
-    /* This path will be used to store bonding information but will fallback
-     * to storing in memory if file access fails (for example due to lack of a filesystem) */
-    const char* db_path = "/fs/bt_sec_db";
-
-    err = this->_ble.securityManager().init(
-        /* enableBonding */ true,
-        /* requireMITM */ false,
-        /* iocaps */ SecurityManager::IO_CAPS_NONE,
-        /* passkey */ nullptr,
-        /* signing */ false,
-        /* dbFilepath */ db_path
-    );
-
-    if (err) {
-        ble_log_error(err, "Error during initialising security manager");
-        return;
-    }
-    // TODO end security manager mixin code (keep below)
+    /* Initialize the SecurityManager (required for privacy) */
+    SecurityManagerMixIn<BASE>::initialize_sm();
 
     err = this->_ble.gap().enablePrivacy(true);
     if (err) {
@@ -59,7 +40,7 @@ void PrivacyMixIn<BASE>::finish_initialization() {
 template<typename BASE>
 void PrivacyMixIn<BASE>::onPrivacyEnabled() {
 
-    tr_info("Privacy Enabled");
+    ble_tr_info("Privacy Enabled");
     BASE::finish_initialization();
 
 }

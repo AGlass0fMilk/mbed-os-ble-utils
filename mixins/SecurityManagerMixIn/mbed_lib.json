@@ -1,0 +1,22 @@
+{
+    "name": "ble-security-manager-mixin",
+    "config": {
+        "enable-bonding": {
+            "help": "Enable bonding. Only applicable if the device is connectable",
+            "value": false
+        },
+        "require-mitm": {
+            "help": "Require man-in-the-middle protection",
+            "value": false
+        },
+        "io-capabilities": {
+            "help": "Specify the IO capabilities of the device. Valid values are IO_CAPS_DISPLAY_ONLY, IO_CAPS_DISPLAY_YESNO, IO_CAPS_KEYBOARD_ONLY, IO_CAPS_NONE, and IO_CAPS_KEYBOARD_DISPLAY",
+            "value": "IO_CAPS_NONE",
+            "accepted_values": ["IO_CAPS_DISPLAY_ONLY", "IO_CAPS_DISPLAY_YESNO", "IO_CAPS_KEYBOARD_ONLY", "IO_CAPS_NONE", "IO_CAPS_KEYBOARD_DISPLAY"]
+        },
+        "enable-signing": {
+            "help": "Enable generating and distributing signing keys during pairing",
+            "value": false
+        }
+    }
+}

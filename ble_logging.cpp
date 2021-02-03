@@ -19,7 +19,7 @@
 
 #include "ble_logging.h"
 
-#define TRACE_GROUP "ble"
+#define TRACE_GROUP BLE_FRAMEWORK_TRACE_GROUP
 
 void ble_log_error(ble_error_t error, const char *msg) {
     switch(error) {
@@ -83,7 +83,7 @@ void ble_log_local_mac_address(BLE &ble) {
     char mac_string[19];
     ble.gap().getAddress(addr_type, address);
     ble_log_sprintf_address(mac_string, address);
-    tr_info("DEVICE MAC ADDRESS: %s", mac_string);
+    tr_info("Device MAC address: %s", mac_string);
 }
 
 void ble_log_sprintf_address(char *buf, const ble::address_t &addr) {

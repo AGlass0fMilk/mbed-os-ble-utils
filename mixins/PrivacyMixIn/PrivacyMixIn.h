@@ -27,13 +27,25 @@
 
 #if BLE_FEATURE_PRIVACY
 
+/**
+ * A MixIn for BLEProcess that adds BLE privacy features.
+ *
+ * Privacy requires the Security Manager, and so PrivacyMixIn inherits
+ * from the SecurityManagerMixIn class.
+ */
 template<typename BASE>
 class PrivacyMixIn : public SecurityManagerMixIn<BASE>
 {
 public:
 
-    PrivacyMixIn(events::EventQueue &event_queue, BLE &ble_interface) : BASE(event_queue, ble_interface) {
-    }
+    /**
+     * Instantiate a BLEProcess with PrivacyMixIn
+     *
+     * For parameter documentation, see SecurityManagerMixIn
+     */
+    PrivacyMixIn(events::EventQueue &eq, BLE &ble,
+            const char* sm_db_path = nullptr, const uint8_t *passkey = nullptr) :
+                SecurityManagerMixIn<BASE>(eq, ble, sm_db_path, passkey) { }
 
     virtual ~PrivacyMixIn() { }
 

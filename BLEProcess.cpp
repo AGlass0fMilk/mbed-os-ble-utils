@@ -22,7 +22,10 @@
 #include "ble_logging.h"
 #include "assert.h"
 
-#define TRACE_GROUP "BleP"
+#define PHY_TYPE_PREFIX ble::phy_t::
+
+#define PREFERRED_TX_PHY PHY_TYPE_PREFIX MBED_CONF_BLE_PROCESS_PREFERRED_TX_PHY
+#define PREFERRED_RX_PHY PHY_TYPE_PREFIX MBED_CONF_BLE_PROCESS_PREFERRED_RX_PHY
 
 BLEProcess::BLEProcess(events::EventQueue &event_queue, BLE &ble_interface)  :
 _event_queue(event_queue),
@@ -35,10 +38,10 @@ BLEProcess::~BLEProcess() {
 }
 
 ble_error_t BLEProcess::start() {
-    tr_info("ble process started.");
+    ble_tr_info("process started");
 
     if (_ble.hasInitialized()) {
-        tr_error("the ble instance (%p) has already been initialized", (void*)(&_ble));
+        ble_tr_error("the ble instance (%p) has already been initialized", (void*)(&_ble));
         return BLE_ERROR_ALREADY_INITIALIZED;
     }
 
@@ -67,7 +70,7 @@ ble_error_t BLEProcess::start() {
 void BLEProcess::stop() {
     if (_ble.hasInitialized()) {
         _ble.shutdown();
-        tr_info("Ble process stopped.");
+        ble_tr_info("Ble process stopped.");
     }
 }
 
@@ -78,7 +81,7 @@ void BLEProcess::on_init_complete(BLE::InitializationCompleteCallbackContext *ev
         return;
     }
 
-    tr_info("BLE instance (%p) initialized", (void*)(&_ble));
+    ble_tr_info("BLE instance (%p) initialized", (void*)(&_ble));
 
     /* Set the preferred PHY as per the configuration */
     ble::phy_set_t rx_phys(/* 1M */ false, /* 2M */ false, /* coded */ false);
@@ -87,11 +90,11 @@ void BLEProcess::on_init_complete(BLE::InitializationCompleteCallbackContext *ev
     /* Note: 2M and coded phy communication will only take place if both peers support it */
 
     /* RX Phy */
-    if(MBED_CONF_BLE_PROCESS_PREFERRED_RX_PHY == ble::phy_t::LE_2M) {
+    if(PREFERRED_RX_PHY == ble::phy_t::LE_2M) {
         /** Assert that the 2M phy is supported */
         assert(_ble.gap().isFeatureSupported(ble::controller_supported_features_t::LE_2M_PHY));
         rx_phys.set_2m(true);
-    } else if(MBED_CONF_BLE_PROCESS_PREFERRED_RX_PHY == ble::phy_t::LE_CODED) {
+    } else if(PREFERRED_RX_PHY == ble::phy_t::LE_CODED) {
         /** Assert that the coded phy is supported */
         assert(_ble.gap().isFeatureSupported(ble::controller_supported_features_t::LE_CODED_PHY));
         rx_phys.set_coded(true);
@@ -101,11 +104,11 @@ void BLEProcess::on_init_complete(BLE::InitializationCompleteCallbackContext *ev
     }
 
     /* TX Phy */
-    if(MBED_CONF_BLE_PROCESS_PREFERRED_TX_PHY == ble::phy_t::LE_2M) {
+    if(PREFERRED_TX_PHY == ble::phy_t::LE_2M) {
         /** Assert that the 2M phy is supported */
         assert(_ble.gap().isFeatureSupported(ble::controller_supported_features_t::LE_2M_PHY));
         tx_phys.set_2m(true);
-    } else if(MBED_CONF_BLE_PROCESS_PREFERRED_TX_PHY == ble::phy_t::LE_CODED) {
+    } else if(PREFERRED_TX_PHY == ble::phy_t::LE_CODED) {
         /** Assert that the coded phy is supported */
         assert(_ble.gap().isFeatureSupported(ble::controller_supported_features_t::LE_CODED_PHY));
         tx_phys.set_coded(true);
@@ -127,20 +130,20 @@ void BLEProcess::on_init_complete(BLE::InitializationCompleteCallbackContext *ev
 //void BLEProcess::onConnectionComplete(
 //        const ble::ConnectionCompleteEvent &event) {
 //    if (event.getStatus() == BLE_ERROR_NONE) {
-//        tr_info("Connected to: ");
+//        ble_tr_info("Connected to: ");
 //        print_address(event.getPeerAddress());
 //        if (_post_connect_cb) {
 //            _post_connect_cb(_ble, _event_queue, event);
 //        }
 //    } else {
-//        tr_error("Failed to connect");
+//        ble_tr_error("Failed to connect");
 //        start_activity();
 //    }
 //}
 //
 //void BLEProcess::onDisconnectionComplete(
 //        const ble::DisconnectionCompleteEvent &event) {
-//    tr_info("Disconnected.");
+//    ble_tr_info("Disconnected.");
 //    start_activity();
 //}
 //
@@ -168,7 +171,7 @@ void BLEProcess::on_init_complete(BLE::InitializationCompleteCallbackContext *ev
 //    error = _gap.setAdvertisingParameters(_adv_handle, adv_params);
 //
 //    if (error) {
-//        tr_error("_ble.gap().setAdvertisingParameters() failed");
+//        ble_tr_error("_ble.gap().setAdvertisingParameters() failed");
 //        return;
 //    }
 //
@@ -193,7 +196,7 @@ void BLEProcess::on_init_complete(BLE::InitializationCompleteCallbackContext *ev
 //        return;
 //    }
 //
-//    tr_info("Advertising as \"%s\"", get_device_name());
+//    ble_tr_info("Advertising as \"%s\"", get_device_name());
 //}
 
 void BLEProcess::schedule_ble_events(BLE::OnEventsToProcessCallbackContext *event) {
